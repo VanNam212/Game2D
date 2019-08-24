@@ -9,13 +9,13 @@ var score_y = 20;
 var lives = 3;
 var lives_x = canvas.width - 70;
 var lives_y = 20;
-var dx = 2;
-var dy = -2;
 
 //khởi tạo của ball
 var ball_x = canvas.width / 2;
 var ball_y = canvas.height - 10;
 var ball_radius = 10;
+var dx = 2;
+var dy = -2;
 
 //khởi tạo paddle
 var paddle_width = 80;
@@ -36,6 +36,7 @@ var brick_top = 30;
 var brick_left = 17;
 var arr_brick_x = brick_left;
 var arr_brick_y = brick_top;
+var count_break = 0;
 
 // khởi tạo mảng bricks
 for (i = 0; i < arr_brick_row; i++) {
@@ -44,20 +45,6 @@ for (i = 0; i < arr_brick_row; i++) {
         arr_brick[i][j] = { x: 0, y: 0, status: 1, width: brick_width, height: brick_height };
     }
 }
-
-// var ball = function () {
-//     ball_radius = 10;
-//     // getRadius = function () {
-//     //     return this.ball_radius;
-//     // };
-//     drawBall = function () {
-//         ctx.beginPath();
-//         ctx.arc(ctx_width / 2, ctx_height - 10, 10, 0, 2 * Math.PI);
-//         ctx.fillStyle = "red";
-//         ctx.fill();
-//         ctx.closePath();
-//     }
-// };
 
 //vẽ ball
 function drawBall() {
@@ -68,27 +55,6 @@ function drawBall() {
     ctx.closePath();
     ball_x += dx;
     ball_y += dy;
-
-    //sự kiện khi ball chạm brick
-    // for (i = 0; i < arr_brick_row; i++) {
-    //     for (j = 0; j < arr_brick_column; j++) {
-    //         if ((arr_brick[i][j].y + brick_height) >= ball_y && arr_brick[i][j].x < ball_x && arr_brick[i][j].x + brick_width > ball_x) {
-    //             arr_brick[i][j].status = 0;
-    //             arr_brick[i][j].x = 0;
-    //             arr_brick[i][j].y = 0;
-    //             arr_brick[i][j].width = 0;
-    //             arr_brick[i][j].height = 0;
-    //             dy = -dy;
-    //         } else if (arr_brick[i][j].y >= ball_y && arr_brick[i][j].x <= ball_x && arr_brick[i][j].x + brick_width >= ball_x) {
-    //             arr_brick[i][j].status = 0;
-    //             dy = -dy;
-    //             arr_brick[i][j].x = 0;
-    //             arr_brick[i][j].y = 0;
-    //             arr_brick[i][j].width = 0;
-    //             arr_brick[i][j].height = 0;
-    //         }
-    //     }
-    // }
 
     //chỉnh lại quả bóng di chuyển khi chạm tường
     if (ball_x + ball_radius >= canvas.width) {
@@ -103,8 +69,18 @@ function drawBall() {
             || (ball_x - ball_radius < paddle_x + paddle_width && ball_x >= paddle_x + paddle_width)) {
             dy = -dy;
         } else {
-            alert("GAME OVER");
-            document.location.reload(ball_x = canvas.width / 2, ball_y = canvas.height - 10);
+            lives--;
+            if (lives == 0) {
+                alert("GAME OVER");
+                document.location.reload(ball_x = canvas.width / 2, ball_y = canvas.height - 10);
+            } else {
+                ball_x = canvas.width / 2;
+                ball_y = canvas.height - 10;
+                dx = 2;
+                dy = -2;
+                paddle_x = canvas.width / 2 - paddle_width / 2;
+                paddle_y = canvas.height - paddle_height;
+            }
         }
     }
 };
@@ -150,12 +126,14 @@ function draw_arr_Brick() {
         for (j = 0; j < arr_brick_column; j++) {
             if (arr_brick[i][j].status == 1) {
                 ctx.beginPath();
-                ctx.rect(arr_brick_x, arr_brick_y, brick_width, brick_height);
+                ctx.rect(arr_brick_x, arr_brick_y, arr_brick[i][j].width, arr_brick[i][j].height);
                 ctx.fillStyle = "yellow";
                 arr_brick[i][j].x = arr_brick_x;
                 arr_brick[i][j].y = arr_brick_y;
                 ctx.fill();
                 ctx.closePath();
+                arr_brick_x += brick_width + brick_left;
+            } else {
                 arr_brick_x += brick_width + brick_left;
             }
         }
@@ -164,24 +142,23 @@ function draw_arr_Brick() {
     }
     arr_brick_x = brick_left;
     arr_brick_y = brick_top;
-    for (i = 0; i < arr_brick_row; i++) {
-        for (j = 0; j < arr_brick_column; j++) {
-            if ((arr_brick[i][j].y + brick_height) >= ball_y && arr_brick[i][j].x < ball_x
-                && arr_brick[i][j].x + brick_width > ball_x) {
-                arr_brick[i][j].status = 0;
-                arr_brick[i][j].x = 0;
-                arr_brick[i][j].y = 0;
-                arr_brick[i][j].width = 0;
-                arr_brick[i][j].height = 0;
-                dy = -dy;
-            } else if (arr_brick[i][j].y >= ball_y && arr_brick[i][j].x <= ball_x
-                && arr_brick[i][j].x + brick_width >= ball_x) {
-                arr_brick[i][j].status = 0;
-                dy = -dy;
-                arr_brick[i][j].x = 0;
-                arr_brick[i][j].y = 0;
-                arr_brick[i][j].width = 0;
-                arr_brick[i][j].height = 0;
+    for (i = arr_brick_row - 1; i >= 0; i--) {
+        for (j = arr_brick_column - 1; j >= 0; j--) {
+            let brick = arr_brick[i][j];
+            if (brick.status != 0) {
+                if ((brick.y + brick.height >= ball_y - ball_radius && ball_y + ball_radius >= brick.y)
+                    && ball_x + ball_radius < brick.x + brick.width && ball_x + ball_radius > brick.x) {
+                    dy = -dy;
+                    score++;
+                    count_break++;
+                    brick.status = 0;
+                    if (count_break == arr_brick_row * arr_brick_column) {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        alert("YOU WIN!");
+                        document.location.reload(ball_x = canvas.width / 2, ball_y = canvas.height - 10);
+                    }
+                    break;
+                }
             }
         }
     }
